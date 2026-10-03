@@ -1,0 +1,614 @@
+/* Kanagawa Wave. The kg- prefix keeps these from clashing with Textual's own theme variables. */
+$kg-bg: #1F1F28;
+$kg-bg-dark: #16161D;
+$kg-surface: #2A2A37;
+$kg-surface-hi: #363646;
+$kg-border: #54546D;
+$kg-fg: #DCD7BA;
+$kg-fg-dim: #C8C093;
+$kg-muted: #727169;
+$kg-sel: #2D4F67;
+$kg-blue: #7E9CD8;
+$kg-cyan: #7FB4CA;
+$kg-green: #98BB6C;
+$kg-yellow: #E6C384;
+$kg-red: #E46876;
+$kg-violet: #957FB8;
+$kg-warn-bg: #49443C;
+$kg-err-bg: #43242B;
+$kg-ok-bg: #2B3328;
+
+Screen {
+    background: $kg-bg;
+    color: $kg-fg;
+}
+
+ModalScreen {
+    align: center middle;
+    background: $kg-bg-dark 60%;
+}
+
+.hidden {
+    display: none;
+}
+
+* {
+    scrollbar-background: $kg-bg-dark;
+    scrollbar-background-hover: $kg-bg-dark;
+    scrollbar-background-active: $kg-bg-dark;
+    scrollbar-color: $kg-border;
+    scrollbar-color-hover: $kg-muted;
+    scrollbar-color-active: $kg-blue;
+    scrollbar-corner-color: $kg-bg-dark;
+    scrollbar-size-vertical: 1;
+}
+
+Header {
+    background: $kg-bg-dark;
+    color: $kg-fg;
+}
+
+HeaderTitle {
+    color: $kg-yellow;
+    text-style: bold;
+}
+
+HeaderIcon {
+    color: $kg-blue;
+}
+
+HeaderClock, HeaderClockSpace {
+    background: $kg-bg-dark;
+    color: $kg-muted;
+}
+
+Footer {
+    background: $kg-bg-dark;
+    color: $kg-fg-dim;
+}
+
+FooterKey {
+    background: $kg-bg-dark;
+    color: $kg-fg-dim;
+}
+
+FooterKey:hover {
+    background: $kg-surface;
+}
+
+FooterKey .footer-key--key {
+    background: $kg-bg-dark;
+    color: $kg-yellow;
+    text-style: bold;
+}
+
+FooterKey .footer-key--description {
+    background: transparent;
+    color: $kg-fg-dim;
+}
+
+/* TabbedContent defaults to height: auto, which collapses any 1fr child inside a pane. */
+TabbedContent {
+    height: 1fr;
+}
+
+TabbedContent > ContentSwitcher {
+    height: 1fr;
+}
+
+TabPane {
+    height: 1fr;
+    padding: 0;
+}
+
+Tabs {
+    background: $kg-bg-dark;
+}
+
+Tab {
+    background: transparent;
+    color: $kg-muted;
+}
+
+Tab:hover {
+    background: $kg-surface;
+    color: $kg-fg;
+}
+
+Tab.-active {
+    background: $kg-bg-dark;
+    color: $kg-yellow;
+    text-style: bold;
+}
+
+Tabs Underline > .underline--bar {
+    background: $kg-surface;
+    color: $kg-blue;
+}
+
+Tabs:focus Underline > .underline--bar {
+    color: $kg-yellow;
+}
+
+/* Flat one-line buttons: cheaper to render than the default tall-bordered ones. */
+Button {
+    height: 1;
+    min-width: 10;
+    padding: 0 2;
+    border: none;
+    background: $kg-surface-hi;
+    color: $kg-fg;
+}
+
+Button.-primary {
+    background: $kg-sel;
+    color: $kg-fg;
+}
+
+Button.-success {
+    background: $kg-ok-bg;
+    color: $kg-green;
+}
+
+Button.-warning {
+    background: $kg-warn-bg;
+    color: $kg-yellow;
+}
+
+Button.-error {
+    background: $kg-err-bg;
+    color: $kg-red;
+}
+
+Button:hover {
+    background-tint: $kg-fg 12%;
+}
+
+Button:focus {
+    text-style: bold;
+    background-tint: $kg-fg 8%;
+}
+
+Button:disabled {
+    opacity: 50%;
+}
+
+Input {
+    height: 3;
+    padding: 0 1;
+    background: $kg-bg-dark;
+    color: $kg-fg;
+    border: tall $kg-border;
+}
+
+Input:focus {
+    border: tall $kg-blue;
+}
+
+Input > .input--cursor {
+    background: $kg-fg;
+    color: $kg-bg-dark;
+}
+
+Input > .input--selection {
+    background: $kg-sel;
+}
+
+Input > .input--placeholder {
+    color: $kg-muted;
+}
+
+Input:disabled {
+    opacity: 50%;
+}
+
+TextArea {
+    background: $kg-bg-dark;
+    color: $kg-fg;
+    border: tall $kg-border;
+}
+
+TextArea:focus {
+    border: tall $kg-blue;
+}
+
+TextArea > .text-area--cursor {
+    background: $kg-fg;
+    color: $kg-bg-dark;
+}
+
+TextArea > .text-area--cursor-line {
+    background: $kg-surface;
+}
+
+TextArea > .text-area--selection {
+    background: $kg-sel;
+}
+
+Input.invalid, TextArea.invalid {
+    border: tall $kg-red;
+}
+
+OptionList {
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+OptionList:focus {
+    border: none;
+}
+
+OptionList > .option-list--option-hover {
+    background: $kg-surface;
+}
+
+OptionList > .option-list--option-highlighted {
+    background: $kg-surface-hi;
+    color: $kg-fg;
+}
+
+OptionList:focus > .option-list--option-highlighted {
+    background: $kg-sel;
+    text-style: bold;
+}
+
+DataTable {
+    background: $kg-bg;
+    color: $kg-fg;
+}
+
+DataTable > .datatable--header {
+    background: $kg-bg-dark;
+    color: $kg-yellow;
+    text-style: bold;
+}
+
+DataTable > .datatable--hover {
+    background: $kg-surface;
+}
+
+DataTable > .datatable--cursor {
+    background: $kg-surface-hi;
+    color: $kg-fg;
+}
+
+DataTable:focus > .datatable--cursor {
+    background: $kg-sel;
+    color: $kg-fg;
+}
+
+ProgressBar Bar {
+    width: 1fr;
+}
+
+Bar > .bar--bar {
+    background: $kg-surface;
+    color: $kg-blue;
+}
+
+Bar > .bar--complete {
+    color: $kg-green;
+}
+
+Bar > .bar--indeterminate {
+    background: $kg-surface;
+    color: $kg-yellow;
+}
+
+PercentageStatus, ETAStatus {
+    color: $kg-fg-dim;
+}
+
+Toast {
+    background: $kg-surface;
+    color: $kg-fg;
+}
+
+Toast.-information {
+    border-left: outer $kg-blue;
+}
+
+Toast.-warning {
+    border-left: outer $kg-yellow;
+}
+
+Toast.-error {
+    border-left: outer $kg-red;
+}
+
+Toast .toast--title {
+    text-style: bold;
+}
+
+CommandPalette {
+    background: $kg-bg-dark 60%;
+}
+
+CommandPalette > Vertical {
+    background: $kg-surface;
+}
+
+Markdown {
+    padding: 0;
+    background: transparent;
+    color: $kg-fg;
+}
+
+MarkdownH1 {
+    background: transparent;
+    color: $kg-yellow;
+}
+
+MarkdownH2 {
+    background: transparent;
+    color: $kg-blue;
+}
+
+MarkdownH3 {
+    background: transparent;
+    color: $kg-cyan;
+}
+
+MarkdownFence {
+    background: $kg-bg-dark;
+}
+
+MarkdownBlockQuote {
+    background: transparent;
+    border-left: outer $kg-border;
+}
+
+/* Docked widgets on the same edge overlap, so the status bar sits in normal flow above the Footer. */
+#status-bar {
+    height: 1;
+    padding: 0 1;
+    background: $kg-bg-dark;
+    color: $kg-fg-dim;
+}
+
+.status-item {
+    width: auto;
+    margin-right: 2;
+}
+
+#status-conn.online {
+    color: $kg-green;
+}
+
+#status-conn.offline {
+    color: $kg-red;
+}
+
+#status-conn.checking {
+    color: $kg-yellow;
+}
+
+#chat-layout {
+    height: 1fr;
+}
+
+#chat-sidebar {
+    width: 30;
+    height: 100%;
+    padding: 0 1;
+    background: $kg-bg-dark;
+    border-right: solid $kg-border;
+}
+
+#sidebar-title {
+    margin-top: 1;
+    color: $kg-yellow;
+    text-style: bold;
+}
+
+#model-list {
+    height: 1fr;
+    margin: 1 0;
+}
+
+#chat-sidebar Button {
+    width: 100%;
+    margin-bottom: 1;
+}
+
+#chat-main {
+    width: 1fr;
+    height: 100%;
+}
+
+#chat-log {
+    height: 1fr;
+    padding: 1 2 0 2;
+}
+
+#chat-stats {
+    height: 1;
+    padding: 0 2;
+    color: $kg-muted;
+}
+
+#chat-input-row {
+    height: auto;
+    padding: 0 1 1 1;
+}
+
+#chat-input {
+    width: 1fr;
+}
+
+#chat-input-row Button {
+    height: 3;
+    margin-left: 1;
+}
+
+.message {
+    height: auto;
+    margin-bottom: 1;
+    padding: 0 1;
+    border-left: thick $kg-border;
+}
+
+.message-role {
+    height: 1;
+    text-style: bold;
+}
+
+.message-body {
+    height: auto;
+}
+
+.message-thinking {
+    height: auto;
+    color: $kg-violet;
+    text-style: italic;
+}
+
+.message.user {
+    background: $kg-surface;
+    border-left: thick $kg-cyan;
+}
+
+.message.user .message-role {
+    color: $kg-cyan;
+}
+
+.message.assistant {
+    border-left: thick $kg-green;
+}
+
+.message.assistant .message-role {
+    color: $kg-green;
+}
+
+.message.streaming {
+    border-left: thick $kg-yellow;
+}
+
+.message.error {
+    background: $kg-err-bg;
+    border-left: thick $kg-red;
+    color: $kg-red;
+}
+
+.message.error .message-role {
+    color: $kg-red;
+}
+
+.message.system {
+    border-left: thick $kg-muted;
+    color: $kg-muted;
+    text-style: italic;
+}
+
+.toolbar {
+    height: auto;
+    padding: 1 1 0 1;
+}
+
+.toolbar Button {
+    margin-right: 1;
+}
+
+#models-table {
+    height: 1fr;
+    margin: 1 1 0 1;
+}
+
+.empty-state {
+    height: 1fr;
+    content-align: center middle;
+    color: $kg-muted;
+}
+
+.notice {
+    height: auto;
+    margin: 1 1 0 1;
+    padding: 0 1;
+    background: $kg-warn-bg;
+    color: $kg-yellow;
+}
+
+.notice.error {
+    background: $kg-err-bg;
+    color: $kg-red;
+}
+
+#settings-form {
+    height: 1fr;
+    padding: 1 2;
+}
+
+#settings-form Input, #settings-form TextArea {
+    max-width: 80;
+}
+
+.field-label {
+    margin-top: 1;
+    color: $kg-yellow;
+    text-style: bold;
+}
+
+.field-hint {
+    color: $kg-muted;
+}
+
+.field-multiline {
+    height: 8;
+}
+
+.form-actions {
+    height: auto;
+    margin-top: 1;
+}
+
+.form-actions Button {
+    margin-right: 1;
+}
+
+.dialog {
+    width: 60;
+    max-width: 90%;
+    height: auto;
+    padding: 1 2;
+    background: $kg-surface;
+    border: thick $kg-border;
+}
+
+.dialog.danger {
+    border: thick $kg-red;
+}
+
+.dialog-title {
+    margin-bottom: 1;
+    color: $kg-yellow;
+    text-style: bold;
+}
+
+.dialog.danger .dialog-title {
+    color: $kg-red;
+}
+
+.dialog-body {
+    height: auto;
+    margin-bottom: 1;
+}
+
+.dialog-buttons {
+    height: auto;
+    align-horizontal: right;
+}
+
+.dialog-buttons Button {
+    margin-left: 1;
+}
+
+#pull-progress {
+    width: 100%;
+    margin-bottom: 1;
+}
+
+#pull-status {
+    height: auto;
+    color: $kg-muted;
+}

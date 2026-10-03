@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anito"
+description = "Terminal control deck for local Ollama models"
+readme = "README.md"
+requires-python = ">=3.10"
+dynamic = ["version"]
+keywords = ["ollama", "tui", "textual", "llm", "terminal"]
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Terminals",
+]
+dependencies = [
+    "textual>=1.0.0",
+    "httpx>=0.27",
+    "rich>=13.7",
+    "psutil>=5.9",
+]
+
+[project.scripts]
+anito = "anito.app:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "anito.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# AnitoApp loads its stylesheet with CSS_PATH = "styles.tcss", so it has to ship
+# inside the installed package (needed for `pipx install .`, not just `pip install -e .`).
+[tool.setuptools.package-data]
+anito = ["styles.tcss"]
