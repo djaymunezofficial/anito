@@ -17,16 +17,33 @@ A terminal control deck for local [Ollama](https://ollama.com) models. Chat, man
 - [Ollama](https://ollama.com) installed and running (default `http://localhost:11434`)
 - A terminal with true-color support
 
-## Install
+## Quick Install
 
-```bash
-git clone https://github.com/<you>/anito.git
-cd anito
+Works on Linux, macOS and Windows.
 
-pipx install .      # isolated install, recommended
-# or, for development:
-pip install -e .
-```
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/<you>/anito.git
+   cd anito
+   ```
+
+2. Run the interactive installer:
+
+   ```bash
+   python3 install.py    # Linux and macOS
+   py install.py         # Windows
+   ```
+
+The installer only uses the Python standard library, so nothing has to be installed first. It walks you through four steps:
+
+1. **Checks your system**: Python 3.10 or newer, pipx, and whether Ollama is running. If Ollama is on another machine or port, it asks for the address and saves it.
+2. **Asks what to do**:
+   - *Install ANITO (recommended)*: installs with pipx so the `anito` command works from any terminal. It can set up pipx for you if it's missing.
+   - *Install for development*: an editable install into a `.venv` in the project folder, so code changes apply right away.
+   - *Uninstall ANITO*: removes the pipx install, the `.venv`, and your saved settings (only if you say yes to that one).
+3. **Shows a summary** and asks before changing anything.
+4. **Installs**, then offers to start ANITO.
 
 Then run:
 
@@ -34,7 +51,19 @@ Then run:
 anito
 ```
 
-After pulling new changes, reinstall with `pipx install --force .` (editable installs pick them up on their own).
+If the installer tells you to, open a new terminal window first so your PATH picks up the change. If a step fails, the installer prints the last lines of the error and the path to a full log (`anito-install.log` in your system's temp folder).
+
+After pulling new changes, run the installer again, or reinstall with `pipx install --force .` (editable installs pick them up on their own).
+
+### Manual install
+
+To skip the installer:
+
+```bash
+pipx install .      # isolated install
+# or, for development:
+pip install -e .
+```
 
 ## Keys
 
@@ -74,6 +103,7 @@ You can edit it in the Settings tab or by hand. Invalid values fall back to thei
 anito/
 ├── pyproject.toml
 ├── README.md
+├── install.py             # interactive installer
 └── src/
     └── anito/
         ├── __init__.py        # __version__
