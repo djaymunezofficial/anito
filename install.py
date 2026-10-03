@@ -355,6 +355,8 @@ def ollama_info(url: str) -> tuple[str, int | None] | None:
 
 
 def normalize_url(raw: str) -> str:
+    if not isinstance(raw, str):
+        return DEFAULT_OLLAMA_URL
     value = raw.strip().rstrip("/")
     if value and not value.startswith(("http://", "https://")):
         value = "http://" + value

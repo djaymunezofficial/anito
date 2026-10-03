@@ -57,7 +57,9 @@ def parse_num_ctx(raw: Any) -> int:
 
 
 def parse_url(raw: Any) -> str:
-    value = str(raw).strip().rstrip("/")
+    if not isinstance(raw, str):
+        raise ValueError("Ollama URL must be text")
+    value = raw.strip().rstrip("/")
     if not value:
         raise ValueError("Ollama URL cannot be empty")
     if not value.startswith(("http://", "https://")):
