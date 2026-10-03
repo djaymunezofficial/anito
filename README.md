@@ -24,7 +24,7 @@ Works on Linux, macOS and Windows.
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/<you>/anito.git
+   git clone https://github.com/djaymunezofficial/anito.git
    cd anito
    ```
 
@@ -155,7 +155,7 @@ git init
 git add .
 git commit -m "Initial commit"
 git branch -M main
-git remote add origin https://github.com/<you>/anito.git
+git remote add origin https://github.com/djaymunezofficial/anito.git
 git push -u origin main
 ```
 
