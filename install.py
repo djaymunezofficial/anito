@@ -517,8 +517,8 @@ def run() -> int:
     if not sys.stdin.isatty():
         bad("This installer is interactive. Run it in a terminal: python install.py")
         return 1
-    if not (ROOT / "pyproject.toml").is_file():
-        bad("pyproject.toml was not found next to install.py. Run the installer from the ANITO folder.")
+    if not (ROOT / "Pyproject.toml").is_file():
+        bad("Pyproject.toml was not found next to install.py. Run the installer from the ANITO folder.")
         return 1
 
     heading("1. Checking your system")
