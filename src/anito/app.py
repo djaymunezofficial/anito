@@ -1,102 +1,267 @@
-"""ANITO: terminal control center for local Ollama models."""
+"""ANITO: terminal control deck for local Ollama models."""
 
 from __future__ import annotations
 
+import inspect
 from collections.abc import Iterable
-from typing import TypeVar
+from functools import partial
 
-from textual.app import App, ComposeResult, SystemCommand
+from textual import work
+from textual.app import App, ComposeResult, SuspendNotSupported, SystemCommand
 from textual.binding import Binding
-from textual.containers import Horizontal
-from textual.screen import Screen
-from textual.widget import Widget
-from textual.widgets import Footer, Header, Static, TabbedContent, TabPane
+from textual.screen import ModalScreen, Screen
 
-from anito import __version__
-from anito.config import load_config
-from anito.dialogs.modals import ConfirmDialog
-from anito.tabs.chat import ChatTab
-from anito.tabs.models import ModelsTab
-from anito.tabs.settings import SettingsTab
-from anito.utils.ollama_api import OllamaClient
+from anito.config import THEMES, load_config, save_config
+from anito.dialogs.modals import ConfirmDialog, HelpDialog
+from anito.utils.history import HistoryStore
+from anito.tabs.chat import ChatHome
+from anito.tabs.models import ModelsPane, fetch_catalog
+from anito.tabs.settings import SettingsModal
+from anito.themes import THEME_LABELS, register_themes, textual_name
+from anito.utils.ollama_api import (
+    OllamaClient,
+    OllamaConnectionError,
+    OllamaError,
+)
+from anito.utils.ollama_control import (
+    Action,
+    OllamaController,
+    Outcome,
+    detect,
+    is_local_url,
+    wait_for_state,
+)
 
-W = TypeVar("W", bound=Widget)
+# Shown in the Help dialog. Keep in step with BINDINGS below.
+_HELP_KEYS = (
+    ("F1", "Help"),
+    ("F2", "Settings"),
+    ("Ctrl+P", "Command palette"),
+    ("Ctrl+N", "New chat"),
+    ("Esc", "Stop the reply, or close a dialog"),
+    ("Ctrl+S", "Save (in Settings)"),
+    ("Ctrl+Q", "Quit"),
+)
 
 
 class AnitoApp(App[None]):
     CSS_PATH = "styles.tcss"
     TITLE = "ANITO"
-    SUB_TITLE = f"{__version__} beta"
+
+    ENABLE_COMMAND_PALETTE = True
+    COMMAND_PALETTE_BINDING = "ctrl+p"
 
     BINDINGS = [
         Binding("ctrl+q", "quit", "Quit", priority=True),
-        Binding("f1", "show_tab('tab-chat')", "Chat", show=False),
-        Binding("f2", "show_tab('tab-models')", "Models", show=False),
-        Binding("f3", "show_tab('tab-settings')", "Settings", show=False),
+        Binding("f1", "show_help", "Help", show=False),
+        Binding("f2", "show_settings", "Settings", show=False),
     ]
 
     def __init__(self) -> None:
         super().__init__()
         self.cfg = load_config()
+        # Registering has to happen before the stylesheet loads, and the theme
+        # must already be ours then, or the $an-* variables are undefined.
+        register_themes(self)
+        self.theme = textual_name(self.cfg.theme)
+
         self.ollama = OllamaClient(self.cfg.ollama_url)
+        self.home = ChatHome(self.ollama, self.cfg, HistoryStore())
+        self._controller: OllamaController | None = None
+        self._settings: SettingsModal | None = None
         self._streaming = False
+        self._loading: str | None = None
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=True)
-        with TabbedContent(initial="tab-chat", id="tabs"):
-            with TabPane("Chat", id="tab-chat"):
-                yield ChatTab(self.ollama, self.cfg)
-            with TabPane("Models", id="tab-models"):
-                yield ModelsTab(self.ollama)
-            with TabPane("Settings", id="tab-settings"):
-                yield SettingsTab(self.cfg)
-        with Horizontal(id="status-bar"):
-            yield Static("Ollama: connecting...", id="status-conn", classes="status-item checking", markup=False)
-            yield Static("Model: none", id="status-model", classes="status-item", markup=False)
-            yield Static("", id="status-ctx", classes="status-item", markup=False)
-        yield Footer()
+        yield self.home
 
     def on_mount(self) -> None:
-        self._update_context()
+        self.home.set_checking()
+        self._startup()
 
-    def _find(self, widget_type: type[W]) -> W:
-        # The base screen stays at the bottom of the stack, so this works even with a modal open.
-        return self.screen_stack[0].query_one(widget_type)
+    # ------------------------------------------------------------------ #
+    # Startup: find a way to control Ollama, auto-start it, read the models
+    # ------------------------------------------------------------------ #
+    @work(exclusive=True, group="startup")
+    async def _startup(self) -> None:
+        controller = detect()
+        self._controller = await controller if inspect.isawaitable(controller) else controller
+        if (
+            self.cfg.ollama_auto_start
+            and self._controller is not None
+            and is_local_url(self.cfg.ollama_url)
+            and not await self._is_up()
+        ):
+            await self._auto_start(self._controller)
+        await self._load_catalog()
 
-    def _set_connection(self, state: str, text: str) -> None:
-        conn = self.query_one("#status-conn", Static)
-        conn.set_classes(f"status-item {state}")
-        conn.update(text)
+    async def _is_up(self) -> bool:
+        try:
+            await self.ollama.version()
+        except OllamaError:
+            return False
+        return True
 
-    def _update_context(self) -> None:
-        self.query_one("#status-ctx", Static).update(f"Context: {self.cfg.num_ctx} tokens")
+    async def _auto_start(self, controller: OllamaController) -> None:
+        self.notify("Starting Ollama...")
+        outcome = await controller.run(Action.START)
+        if outcome.needs_terminal:
+            outcome = self._run_in_terminal(controller, Action.START)
+        if not outcome.ok:
+            self.notify(outcome.message or "Could not start Ollama", severity="error")
+        elif not await wait_for_state(self.ollama, running=True):
+            self.notify("Ollama didn't answer in time", severity="warning")
 
-    def on_models_tab_loaded(self, event: ModelsTab.Loaded) -> None:
-        self._set_connection("online", f"Ollama: connected ({self.cfg.ollama_url})")
-        self._find(ChatTab).set_models(event.models)
+    def _run_in_terminal(self, controller: OllamaController, action: Action) -> Outcome:
+        # sudo or polkit wants a password, so hand the terminal over for a moment.
+        try:
+            with self.suspend():
+                return controller.run_in_terminal(action)
+        except SuspendNotSupported:
+            return Outcome(False, "This terminal can't ask for a password. Start Ollama yourself.")
 
-    def on_models_tab_failed(self, event: ModelsTab.Failed) -> None:
-        self._set_connection("offline", "Ollama: offline" if event.offline else "Ollama: error")
-        self._find(ChatTab).set_offline(event.error)
+    # ------------------------------------------------------------------ #
+    # Model catalog
+    # ------------------------------------------------------------------ #
+    async def _load_catalog(self) -> None:
+        try:
+            catalog = await fetch_catalog(self.ollama)
+        except OllamaError as exc:
+            self.home.set_offline(str(exc), offline=isinstance(exc, OllamaConnectionError))
+        else:
+            self.home.set_models(catalog.models, catalog.running)
 
-    def on_chat_tab_model_changed(self, event: ChatTab.ModelChanged) -> None:
-        self.query_one("#status-model", Static).update(f"Model: {event.model or 'none'}")
+    @work(exclusive=True, group="catalog")
+    async def refresh_catalog(self) -> None:
+        self.home.set_checking()
+        await self._load_catalog()
 
-    def on_chat_tab_stream_state(self, event: ChatTab.StreamState) -> None:
+    def _refresh_models(self) -> None:
+        """Re-read the models. With Settings open its table does it and reports back."""
+        if self._settings is not None:
+            self.home.set_checking()
+            self._settings.query_one(ModelsPane).refresh_models()
+        else:
+            self.refresh_catalog()
+
+    def on_models_pane_loaded(self, event: ModelsPane.Loaded) -> None:
+        self.home.set_models(event.models, event.running)
+
+    def on_models_pane_failed(self, event: ModelsPane.Failed) -> None:
+        self.home.set_offline(event.error, offline=event.offline)
+
+    def on_models_pane_load_requested(self, event: ModelsPane.LoadRequested) -> None:
+        event.stop()
+        if self._loading:
+            self.notify(f"Wait for {self._loading} to finish loading", severity="warning")
+            return
+        self._load_model(event.name)
+
+    @work(group="load-model")
+    async def _load_model(self, name: str) -> None:
+        # The app does the loading, so it carries on if Settings is closed meanwhile.
+        self._set_loading(name)
+        try:
+            await self.ollama.load(name, keep_alive=self.cfg.keep_alive)
+        except OllamaError as exc:
+            self.notify(str(exc), title=f"Could not load {name}", severity="error")
+        else:
+            self.notify(f"Loaded {name}")
+        self._set_loading(None)
+        if self._settings is not None:
+            self._settings.query_one(ModelsPane).refresh_models()
+        else:
+            await self._load_catalog()
+
+    def _set_loading(self, name: str | None) -> None:
+        self._loading = name
+        if self._settings is not None:
+            self._settings.set_loading(name)
+
+    # ------------------------------------------------------------------ #
+    # Messages from the home screen
+    # ------------------------------------------------------------------ #
+    def on_chat_home_stream_state(self, event: ChatHome.StreamState) -> None:
         self._streaming = event.active
-        self._find(ModelsTab).set_streaming(event.active)
-        self._find(SettingsTab).set_streaming(event.active)
+        if self._settings is not None:
+            self._settings.set_streaming(event.active)
 
-    def on_settings_tab_saved(self, event: SettingsTab.Saved) -> None:
-        self._update_context()
+    def on_chat_home_help_requested(self, event: ChatHome.HelpRequested) -> None:
+        event.stop()
+        self.action_show_help()
+
+    def on_chat_home_settings_requested(self, event: ChatHome.SettingsRequested) -> None:
+        event.stop()
+        self.action_show_settings()
+
+    async def on_chat_home_quit_requested(self, event: ChatHome.QuitRequested) -> None:
+        event.stop()
+        await self.action_quit()
+
+    # ------------------------------------------------------------------ #
+    # Help and Settings
+    # ------------------------------------------------------------------ #
+    def action_show_help(self) -> None:
+        if isinstance(self.screen, ModalScreen):
+            return
+        self.push_screen(HelpDialog(_HELP_KEYS))
+
+    def action_show_settings(self) -> None:
+        if isinstance(self.screen, ModalScreen):
+            return
+        modal = SettingsModal(
+            self.cfg,
+            self.ollama,
+            self._controller,
+            streaming=self._streaming,
+            loading=self._loading,
+        )
+        self._settings = modal
+        self.push_screen(modal, self._on_settings_closed)
+
+    def _on_settings_closed(self, _result: None) -> None:
+        self._settings = None
+        self.home.refresh_context()
+
+    def on_settings_modal_saved(self, event: SettingsModal.Saved) -> None:
+        self.home.refresh_context()
         if event.url_changed:
             self.ollama.base_url = self.cfg.ollama_url
-            self._set_connection("checking", "Ollama: connecting...")
-            self._find(ModelsTab).refresh_models()
+            self.home.refresh_url()
+            self._refresh_models()
 
-    def action_show_tab(self, tab_id: str) -> None:
-        self.query_one(TabbedContent).active = tab_id
+    # ------------------------------------------------------------------ #
+    # Command palette
+    # ------------------------------------------------------------------ #
+    def get_system_commands(self, screen: Screen) -> Iterable[SystemCommand]:
+        # Textual's own theme picker lists its built-in themes, which don't
+        # define the $an-* colors. Ours replaces it below.
+        for command in super().get_system_commands(screen):
+            if command.title != "Theme":
+                yield command
+        yield SystemCommand("Settings", "Open the settings popup", self.action_show_settings)
+        yield SystemCommand("Help", "Show keys and tips", self.action_show_help)
+        yield SystemCommand("New chat", "Start an empty conversation", self.home.action_new_chat)
+        yield SystemCommand("Stop generation", "Cancel the reply that is streaming", self.home.action_stop_generation)
+        yield SystemCommand("Refresh models", "Reload the installed model list", self._refresh_models)
+        for key in THEMES:
+            yield SystemCommand(
+                f"Theme: {THEME_LABELS[key]}",
+                "Switch the color theme",
+                partial(self._set_theme, key),
+            )
 
+    def _set_theme(self, key: str) -> None:
+        self.theme = textual_name(key)
+        self.cfg.theme = key
+        try:
+            save_config(self.cfg)
+        except OSError as exc:
+            self.notify(f"Theme applied, but could not save it: {exc}", severity="warning")
+
+    # ------------------------------------------------------------------ #
+    # Quitting
+    # ------------------------------------------------------------------ #
     async def action_quit(self) -> None:
         # Quitting mid-reply throws the reply away, so ask first.
         if not self._streaming:
@@ -116,41 +281,6 @@ class AnitoApp(App[None]):
             ),
             on_done,
         )
-
-    def get_system_commands(self, screen: Screen) -> Iterable[SystemCommand]:
-        # The theme picker would do nothing useful: colors come from styles.tcss.
-        for command in super().get_system_commands(screen):
-            if command.title != "Theme":
-                yield command
-        yield SystemCommand("New chat", "Clear the conversation and start over", self._cmd_new_chat)
-        yield SystemCommand("Stop generation", "Cancel the reply that is streaming", self._cmd_stop)
-        yield SystemCommand("Refresh models", "Reload the installed model list", self._cmd_refresh)
-        yield SystemCommand("Pull model", "Download a model from the Ollama library", self._cmd_pull)
-        yield SystemCommand("Go to Chat", "Switch to the Chat tab", self._cmd_show_chat)
-        yield SystemCommand("Go to Models", "Switch to the Models tab", self._cmd_show_models)
-        yield SystemCommand("Go to Settings", "Switch to the Settings tab", self._cmd_show_settings)
-
-    def _cmd_new_chat(self) -> None:
-        self.action_show_tab("tab-chat")
-        self._find(ChatTab).action_new_chat()
-
-    def _cmd_stop(self) -> None:
-        self._find(ChatTab).action_stop_generation()
-
-    def _cmd_refresh(self) -> None:
-        self._find(ModelsTab).action_refresh_models()
-
-    def _cmd_pull(self) -> None:
-        self._find(ModelsTab).action_pull_model()
-
-    def _cmd_show_chat(self) -> None:
-        self.action_show_tab("tab-chat")
-
-    def _cmd_show_models(self) -> None:
-        self.action_show_tab("tab-models")
-
-    def _cmd_show_settings(self) -> None:
-        self.action_show_tab("tab-settings")
 
     async def on_unmount(self) -> None:
         await self.ollama.close()

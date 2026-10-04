@@ -1,31 +1,16 @@
-/* Kanagawa Wave. The kg- prefix keeps these from clashing with Textual's own theme variables. */
-$kg-bg: #1F1F28;
-$kg-bg-dark: #16161D;
-$kg-surface: #2A2A37;
-$kg-surface-hi: #363646;
-$kg-border: #54546D;
-$kg-fg: #DCD7BA;
-$kg-fg-dim: #C8C093;
-$kg-muted: #727169;
-$kg-sel: #2D4F67;
-$kg-blue: #7E9CD8;
-$kg-cyan: #7FB4CA;
-$kg-green: #98BB6C;
-$kg-yellow: #E6C384;
-$kg-red: #E46876;
-$kg-violet: #957FB8;
-$kg-warn-bg: #49443C;
-$kg-err-bg: #43242B;
-$kg-ok-bg: #2B3328;
+/*
+ * Every color here is a $an-* variable supplied by the active theme (see themes.py).
+ * A theme has to define all of them, or the stylesheet fails to load.
+ */
 
 Screen {
-    background: $kg-bg;
-    color: $kg-fg;
+    background: $an-bg;
+    color: $an-fg;
 }
 
 ModalScreen {
     align: center middle;
-    background: $kg-bg-dark 60%;
+    background: $an-bg-dark 70%;
 }
 
 .hidden {
@@ -33,169 +18,111 @@ ModalScreen {
 }
 
 * {
-    scrollbar-background: $kg-bg-dark;
-    scrollbar-background-hover: $kg-bg-dark;
-    scrollbar-background-active: $kg-bg-dark;
-    scrollbar-color: $kg-border;
-    scrollbar-color-hover: $kg-muted;
-    scrollbar-color-active: $kg-blue;
-    scrollbar-corner-color: $kg-bg-dark;
+    scrollbar-background: $an-bg-dark;
+    scrollbar-background-hover: $an-bg-dark;
+    scrollbar-background-active: $an-bg-dark;
+    scrollbar-color: $an-border;
+    scrollbar-color-hover: $an-muted;
+    scrollbar-color-active: $an-fg;
+    scrollbar-corner-color: $an-bg-dark;
     scrollbar-size-vertical: 1;
 }
 
-Header {
-    background: $kg-bg-dark;
-    color: $kg-fg;
-}
-
-HeaderTitle {
-    color: $kg-yellow;
-    text-style: bold;
-}
-
-HeaderIcon {
-    color: $kg-blue;
-}
-
-HeaderClock, HeaderClockSpace {
-    background: $kg-bg-dark;
-    color: $kg-muted;
-}
-
-Footer {
-    background: $kg-bg-dark;
-    color: $kg-fg-dim;
-}
-
-FooterKey {
-    background: $kg-bg-dark;
-    color: $kg-fg-dim;
-}
-
-FooterKey:hover {
-    background: $kg-surface;
-}
-
-FooterKey .footer-key--key {
-    background: $kg-bg-dark;
-    color: $kg-yellow;
-    text-style: bold;
-}
-
-FooterKey .footer-key--description {
-    background: transparent;
-    color: $kg-fg-dim;
-}
-
-/* TabbedContent defaults to height: auto, which collapses any 1fr child inside a pane. */
-TabbedContent {
-    height: 1fr;
-}
-
-TabbedContent > ContentSwitcher {
-    height: 1fr;
-}
-
-TabPane {
-    height: 1fr;
-    padding: 0;
-}
-
-Tabs {
-    background: $kg-bg-dark;
-}
-
-Tab {
-    background: transparent;
-    color: $kg-muted;
-}
-
-Tab:hover {
-    background: $kg-surface;
-    color: $kg-fg;
-}
-
-Tab.-active {
-    background: $kg-bg-dark;
-    color: $kg-yellow;
-    text-style: bold;
-}
-
-Tabs Underline > .underline--bar {
-    background: $kg-surface;
-    color: $kg-blue;
-}
-
-Tabs:focus Underline > .underline--bar {
-    color: $kg-yellow;
-}
-
-/* Flat one-line buttons: cheaper to render than the default tall-bordered ones. */
+/* Buttons: flat, one line tall. The .link variant is plain underlined text. */
 Button {
     height: 1;
     min-width: 10;
     padding: 0 2;
     border: none;
-    background: $kg-surface-hi;
-    color: $kg-fg;
+    background: $an-surface-hi;
+    color: $an-fg;
 }
 
 Button.-primary {
-    background: $kg-sel;
-    color: $kg-fg;
+    background: $an-primary;
+    color: $an-on-primary;
+    text-style: bold;
 }
 
 Button.-success {
-    background: $kg-ok-bg;
-    color: $kg-green;
+    background: $an-ok-bg;
+    color: $an-ok;
 }
 
 Button.-warning {
-    background: $kg-warn-bg;
-    color: $kg-yellow;
+    background: $an-warn-bg;
+    color: $an-warn;
 }
 
 Button.-error {
-    background: $kg-err-bg;
-    color: $kg-red;
+    background: $an-error-bg;
+    color: $an-error;
 }
 
 Button:hover {
-    background-tint: $kg-fg 12%;
+    background-tint: $an-fg 12%;
 }
 
 Button:focus {
     text-style: bold;
-    background-tint: $kg-fg 8%;
+    background-tint: $an-fg 8%;
 }
 
 Button:disabled {
     opacity: 50%;
 }
 
+Button.link {
+    width: auto;
+    min-width: 0;
+    padding: 0;
+    background: transparent;
+    color: $an-fg;
+    text-style: underline;
+    text-align: left;
+    content-align: left middle;
+}
+
+Button.link:hover {
+    background: transparent;
+    background-tint: transparent;
+    text-style: bold underline;
+}
+
+Button.link:focus {
+    background: $an-fg;
+    background-tint: transparent;
+    color: $an-bg;
+    text-style: bold underline;
+}
+
+Button.link:disabled {
+    opacity: 40%;
+}
+
 Input {
     height: 3;
     padding: 0 1;
-    background: $kg-bg-dark;
-    color: $kg-fg;
-    border: tall $kg-border;
+    background: $an-surface-hi;
+    color: $an-fg;
+    border: tall $an-surface-hi;
 }
 
 Input:focus {
-    border: tall $kg-blue;
+    border: tall $an-fg;
 }
 
 Input > .input--cursor {
-    background: $kg-fg;
-    color: $kg-bg-dark;
+    background: $an-fg;
+    color: $an-bg-dark;
 }
 
 Input > .input--selection {
-    background: $kg-sel;
+    background: $an-sel;
 }
 
 Input > .input--placeholder {
-    color: $kg-muted;
+    color: $an-muted;
 }
 
 Input:disabled {
@@ -203,30 +130,30 @@ Input:disabled {
 }
 
 TextArea {
-    background: $kg-bg-dark;
-    color: $kg-fg;
-    border: tall $kg-border;
+    background: $an-surface-hi;
+    color: $an-fg;
+    border: tall $an-surface-hi;
 }
 
 TextArea:focus {
-    border: tall $kg-blue;
+    border: tall $an-fg;
 }
 
 TextArea > .text-area--cursor {
-    background: $kg-fg;
-    color: $kg-bg-dark;
+    background: $an-fg;
+    color: $an-bg-dark;
 }
 
 TextArea > .text-area--cursor-line {
-    background: $kg-surface;
+    background: $an-surface;
 }
 
 TextArea > .text-area--selection {
-    background: $kg-sel;
+    background: $an-sel;
 }
 
 Input.invalid, TextArea.invalid {
-    border: tall $kg-red;
+    border: tall $an-error;
 }
 
 OptionList {
@@ -240,42 +167,42 @@ OptionList:focus {
 }
 
 OptionList > .option-list--option-hover {
-    background: $kg-surface;
+    background: $an-surface;
 }
 
 OptionList > .option-list--option-highlighted {
-    background: $kg-surface-hi;
-    color: $kg-fg;
+    background: $an-surface-hi;
+    color: $an-fg;
 }
 
 OptionList:focus > .option-list--option-highlighted {
-    background: $kg-sel;
+    background: $an-sel;
     text-style: bold;
 }
 
 DataTable {
-    background: $kg-bg;
-    color: $kg-fg;
+    background: $an-bg-dark;
+    color: $an-fg;
 }
 
 DataTable > .datatable--header {
-    background: $kg-bg-dark;
-    color: $kg-yellow;
+    background: $an-surface;
+    color: $an-accent;
     text-style: bold;
 }
 
 DataTable > .datatable--hover {
-    background: $kg-surface;
+    background: $an-surface;
 }
 
 DataTable > .datatable--cursor {
-    background: $kg-surface-hi;
-    color: $kg-fg;
+    background: $an-surface-hi;
+    color: $an-fg;
 }
 
 DataTable:focus > .datatable--cursor {
-    background: $kg-sel;
-    color: $kg-fg;
+    background: $an-sel;
+    color: $an-fg;
 }
 
 ProgressBar Bar {
@@ -283,138 +210,336 @@ ProgressBar Bar {
 }
 
 Bar > .bar--bar {
-    background: $kg-surface;
-    color: $kg-blue;
+    background: $an-surface;
+    color: $an-fg;
 }
 
 Bar > .bar--complete {
-    color: $kg-green;
+    color: $an-ok;
 }
 
 Bar > .bar--indeterminate {
-    background: $kg-surface;
-    color: $kg-yellow;
+    background: $an-surface;
+    color: $an-accent;
 }
 
 PercentageStatus, ETAStatus {
-    color: $kg-fg-dim;
+    color: $an-fg-dim;
+}
+
+Switch {
+    width: auto;
+    height: 3;
+    margin-right: 2;
+    padding: 0 1;
+    background: $an-bg-dark;
+    border: tall $an-border;
+}
+
+Switch:focus {
+    border: tall $an-fg;
+}
+
+Switch > .switch--slider {
+    background: $an-surface;
+    color: $an-muted;
+}
+
+Switch.-on > .switch--slider {
+    color: $an-ok;
+}
+
+RadioSet {
+    height: auto;
+    padding: 0;
+    background: transparent;
+    border: none;
+}
+
+RadioSet:focus {
+    border: none;
+}
+
+ToggleButton {
+    background: transparent;
+    color: $an-fg;
+}
+
+ToggleButton > .toggle--button {
+    background: $an-bg-dark;
+    color: $an-muted;
+}
+
+ToggleButton.-on > .toggle--button {
+    color: $an-accent;
+}
+
+ToggleButton:focus > .toggle--label {
+    background: $an-sel;
+    color: $an-fg;
+    text-style: bold;
 }
 
 Toast {
-    background: $kg-surface;
-    color: $kg-fg;
+    background: $an-surface;
+    color: $an-fg;
 }
 
 Toast.-information {
-    border-left: outer $kg-blue;
+    border-left: outer $an-fg;
 }
 
 Toast.-warning {
-    border-left: outer $kg-yellow;
+    border-left: outer $an-warn;
 }
 
 Toast.-error {
-    border-left: outer $kg-red;
+    border-left: outer $an-error;
 }
 
 Toast .toast--title {
     text-style: bold;
 }
 
+Tooltip {
+    background: $an-surface;
+    color: $an-fg;
+    border: round $an-border;
+}
+
 CommandPalette {
-    background: $kg-bg-dark 60%;
+    background: $an-bg-dark 70%;
 }
 
 CommandPalette > Vertical {
-    background: $kg-surface;
+    background: $an-surface;
 }
 
 Markdown {
     padding: 0;
     background: transparent;
-    color: $kg-fg;
+    color: $an-fg;
 }
 
 MarkdownH1 {
     background: transparent;
-    color: $kg-yellow;
+    color: $an-accent;
 }
 
 MarkdownH2 {
     background: transparent;
-    color: $kg-blue;
+    color: $an-link;
 }
 
 MarkdownH3 {
     background: transparent;
-    color: $kg-cyan;
+    color: $an-user;
 }
 
 MarkdownFence {
-    background: $kg-bg-dark;
+    background: $an-surface;
 }
 
 MarkdownBlockQuote {
     background: transparent;
-    border-left: outer $kg-border;
+    border-left: outer $an-border;
 }
 
-/* Docked widgets on the same edge overlap, so the status bar sits in normal flow above the Footer. */
-#status-bar {
-    height: 1;
-    padding: 0 1;
-    background: $kg-bg-dark;
-    color: $kg-fg-dim;
-}
-
-.status-item {
-    width: auto;
-    margin-right: 2;
-}
-
-#status-conn.online {
-    color: $kg-green;
-}
-
-#status-conn.offline {
-    color: $kg-red;
-}
-
-#status-conn.checking {
-    color: $kg-yellow;
-}
-
-#chat-layout {
-    height: 1fr;
-}
-
-#chat-sidebar {
-    width: 30;
+/* Home screen: sidebar on the left, chat on the right. */
+#home {
     height: 100%;
-    padding: 0 1;
-    background: $kg-bg-dark;
-    border-right: solid $kg-border;
 }
 
-#sidebar-title {
+#sidebar {
+    width: 38;
+    height: 100%;
+    padding: 1 2 0 2;
+    background: $an-bg-dark;
+    border-right: solid $an-border;
+}
+
+#brand-title {
+    width: 100%;
+    height: auto;
+    color: $an-fg;
+    text-style: bold;
+    text-align: center;
+}
+
+#brand-tagline {
+    width: 100%;
+    height: auto;
     margin-top: 1;
-    color: $kg-yellow;
+    color: $an-fg-dim;
+    text-align: center;
+}
+
+#brand-version {
+    width: 100%;
+    height: 1;
+    color: $an-muted;
+    text-align: center;
+}
+
+#history-section {
+    height: 1fr;
+    margin-top: 1;
+    border-top: solid $an-border;
+}
+
+#history-header {
+    height: 1;
+    margin-top: 1;
+}
+
+#history-toggle {
+    width: 1fr;
+}
+
+#history-list {
+    height: 1fr;
+    margin-top: 1;
+}
+
+.history-item {
+    height: 1;
+}
+
+.history-item.active {
+    background: $an-surface-hi;
+}
+
+Button.history-title {
+    width: 1fr;
+}
+
+.history-item.active .history-title {
+    text-style: bold underline;
+}
+
+Button.history-delete {
+    width: 3;
+    min-width: 3;
+    text-style: none;
+    content-align: center middle;
+}
+
+.history-empty {
+    height: auto;
+    color: $an-muted;
+}
+
+#status-section {
+    height: auto;
+    padding-top: 1;
+    border-top: solid $an-border;
+}
+
+#status-box {
+    height: auto;
+    padding: 0 1;
+    background: $an-surface-hi;
+}
+
+.status-row {
+    height: 1;
+}
+
+.status-key {
+    width: 8;
+    color: $an-fg-dim;
+}
+
+#status-conn {
+    width: auto;
+    margin-right: 1;
     text-style: bold;
 }
 
-#model-list {
-    height: 1fr;
+#status-conn.online {
+    color: $an-ok;
+}
+
+#status-conn.offline {
+    color: $an-error;
+}
+
+#status-conn.checking {
+    color: $an-warn;
+}
+
+#status-url {
+    width: 1fr;
+    height: 1;
+    color: $an-muted;
+}
+
+#status-model {
+    width: 1fr;
+    text-style: bold underline;
+}
+
+#tokens-row {
+    height: 1;
+    margin-top: 1;
+}
+
+#tokens-label {
+    width: 9;
+    padding-left: 1;
+    color: $an-fg-dim;
+}
+
+#tokens-bar {
+    width: 1fr;
+    color: $an-fg;
+}
+
+#tokens-bar.warn {
+    color: $an-warn;
+}
+
+#tokens-bar.full {
+    color: $an-error;
+}
+
+#tokens-count {
+    width: auto;
+    color: $an-fg-dim;
+}
+
+#sidebar-footer {
+    height: 1;
     margin: 1 0;
 }
 
-#chat-sidebar Button {
-    width: 100%;
-    margin-bottom: 1;
+#btn-help {
+    width: 1fr;
 }
 
-#chat-main {
+#btn-settings {
+    width: auto;
+}
+
+#main {
     width: 1fr;
     height: 100%;
+}
+
+#main-topbar {
+    height: 1;
+    padding: 0 1;
+    align-horizontal: right;
+}
+
+#btn-close {
+    width: 3;
+    min-width: 3;
+    padding: 0;
+    background: $an-fg;
+    color: $an-bg;
+    text-style: bold;
+    content-align: center middle;
 }
 
 #chat-log {
@@ -425,12 +550,12 @@ MarkdownBlockQuote {
 #chat-stats {
     height: 1;
     padding: 0 2;
-    color: $kg-muted;
+    color: $an-muted;
 }
 
 #chat-input-row {
     height: auto;
-    padding: 0 1 1 1;
+    padding: 0 2 1 2;
 }
 
 #chat-input {
@@ -440,13 +565,14 @@ MarkdownBlockQuote {
 #chat-input-row Button {
     height: 3;
     margin-left: 1;
+    content-align: center middle;
 }
 
 .message {
     height: auto;
     margin-bottom: 1;
     padding: 0 1;
-    border-left: thick $kg-border;
+    border-left: thick $an-border;
 }
 
 .message-role {
@@ -460,50 +586,164 @@ MarkdownBlockQuote {
 
 .message-thinking {
     height: auto;
-    color: $kg-violet;
+    color: $an-think;
     text-style: italic;
 }
 
 .message.user {
-    background: $kg-surface;
-    border-left: thick $kg-cyan;
+    background: $an-surface;
+    border-left: thick $an-user;
 }
 
 .message.user .message-role {
-    color: $kg-cyan;
+    color: $an-user;
 }
 
 .message.assistant {
-    border-left: thick $kg-green;
+    border-left: thick $an-assistant;
 }
 
 .message.assistant .message-role {
-    color: $kg-green;
+    color: $an-assistant;
 }
 
 .message.streaming {
-    border-left: thick $kg-yellow;
+    border-left: thick $an-accent;
 }
 
 .message.error {
-    background: $kg-err-bg;
-    border-left: thick $kg-red;
-    color: $kg-red;
+    background: $an-error-bg;
+    border-left: thick $an-error;
+    color: $an-error;
 }
 
 .message.error .message-role {
-    color: $kg-red;
+    color: $an-error;
 }
 
 .message.system {
-    border-left: thick $kg-muted;
-    color: $kg-muted;
+    border-left: thick $an-muted;
+    color: $an-muted;
     text-style: italic;
+}
+
+.notice {
+    height: auto;
+    margin: 1 2 0 2;
+    padding: 0 1;
+    background: $an-warn-bg;
+    color: $an-warn;
+}
+
+.notice.error {
+    background: $an-error-bg;
+    border-left: thick $an-error;
+    color: $an-error;
+    text-style: bold;
+}
+
+.empty-state {
+    height: 1fr;
+    content-align: center middle;
+    text-align: center;
+    color: $an-muted;
+}
+
+/* Settings popup: navigation on the left, one pane at a time on the right. */
+#settings-dialog {
+    width: 90%;
+    max-width: 110;
+    height: 85%;
+    max-height: 40;
+    border: thick $an-border;
+    background: $an-surface-hi;
+}
+
+#settings-nav {
+    width: 28;
+    height: 100%;
+    padding: 1 2;
+    background: $an-surface;
+}
+
+#settings-title {
+    margin-bottom: 2;
+    color: $an-fg;
+    text-style: bold;
+}
+
+Button.nav-link {
+    width: 100%;
+    margin-bottom: 1;
+}
+
+Button.nav-link.active {
+    color: $an-accent;
+    text-style: bold underline;
+}
+
+#nav-back {
+    dock: bottom;
+}
+
+#settings-content {
+    width: 1fr;
+    height: 100%;
+}
+
+.pane {
+    height: 100%;
+    padding: 1 2;
+}
+
+.pane-title {
+    margin-bottom: 1;
+    color: $an-accent;
+    text-style: bold;
+}
+
+.field-label {
+    margin-top: 1;
+    color: $an-accent;
+    text-style: bold;
+}
+
+.field-hint {
+    color: $an-fg-dim;
+}
+
+.field-multiline {
+    height: 8;
+}
+
+#settings-content Input,
+#settings-content TextArea {
+    max-width: 80;
+    background: $an-bg-dark;
+    border: tall $an-bg-dark;
+}
+
+#settings-content Input:focus,
+#settings-content TextArea:focus {
+    border: tall $an-fg;
+}
+
+#settings-content Input.invalid,
+#settings-content TextArea.invalid {
+    border: tall $an-error;
+}
+
+#settings-content .notice {
+    margin: 1 0 0 0;
+}
+
+#settings-content .empty-state {
+    background: $an-bg-dark;
 }
 
 .toolbar {
     height: auto;
-    padding: 1 1 0 1;
+    margin-bottom: 1;
 }
 
 .toolbar Button {
@@ -512,49 +752,6 @@ MarkdownBlockQuote {
 
 #models-table {
     height: 1fr;
-    margin: 1 1 0 1;
-}
-
-.empty-state {
-    height: 1fr;
-    content-align: center middle;
-    color: $kg-muted;
-}
-
-.notice {
-    height: auto;
-    margin: 1 1 0 1;
-    padding: 0 1;
-    background: $kg-warn-bg;
-    color: $kg-yellow;
-}
-
-.notice.error {
-    background: $kg-err-bg;
-    color: $kg-red;
-}
-
-#settings-form {
-    height: 1fr;
-    padding: 1 2;
-}
-
-#settings-form Input, #settings-form TextArea {
-    max-width: 80;
-}
-
-.field-label {
-    margin-top: 1;
-    color: $kg-yellow;
-    text-style: bold;
-}
-
-.field-hint {
-    color: $kg-muted;
-}
-
-.field-multiline {
-    height: 8;
 }
 
 .form-actions {
@@ -566,27 +763,82 @@ MarkdownBlockQuote {
     margin-right: 1;
 }
 
+.power-row {
+    height: auto;
+    margin-top: 1;
+}
+
+#power-state {
+    width: auto;
+    margin-right: 2;
+    text-style: bold;
+}
+
+#power-state.online {
+    color: $an-ok;
+}
+
+#power-state.offline {
+    color: $an-error;
+}
+
+#power-state.checking {
+    color: $an-warn;
+}
+
+#power-note {
+    margin-top: 1;
+    color: $an-fg-dim;
+}
+
+.skill-row {
+    height: auto;
+    margin-bottom: 1;
+}
+
+.skill-info {
+    width: 1fr;
+    height: auto;
+}
+
+.skill-name {
+    text-style: bold;
+}
+
+.skill-usage {
+    color: $an-fg-dim;
+}
+
+.skill-desc {
+    color: $an-fg-dim;
+}
+
+/* Dialogs: confirm, pull, model picker and help share one look. */
 .dialog {
     width: 60;
     max-width: 90%;
     height: auto;
     padding: 1 2;
-    background: $kg-surface;
-    border: thick $kg-border;
+    background: $an-surface;
+    border: thick $an-border;
+}
+
+.dialog.wide {
+    width: 76;
 }
 
 .dialog.danger {
-    border: thick $kg-red;
+    border: thick $an-error;
 }
 
 .dialog-title {
     margin-bottom: 1;
-    color: $kg-yellow;
+    color: $an-accent;
     text-style: bold;
 }
 
 .dialog.danger .dialog-title {
-    color: $kg-red;
+    color: $an-error;
 }
 
 .dialog-body {
@@ -603,6 +855,13 @@ MarkdownBlockQuote {
     margin-left: 1;
 }
 
+.dialog OptionList {
+    height: auto;
+    max-height: 14;
+    margin-bottom: 1;
+    background: $an-bg-dark;
+}
+
 #pull-progress {
     width: 100%;
     margin-bottom: 1;
@@ -610,5 +869,11 @@ MarkdownBlockQuote {
 
 #pull-status {
     height: auto;
-    color: $kg-muted;
+    color: $an-fg-dim;
+}
+
+#help-body {
+    height: auto;
+    max-height: 24;
+    margin-bottom: 1;
 }

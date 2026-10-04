@@ -423,7 +423,7 @@ def apply_ollama_url(url: str | None) -> None:
         save_ollama_url(url)
         ok("Saved the Ollama address (%s)" % url)
     except (OSError, ValueError) as exc:
-        warn("Could not save the Ollama address (%s). Set it later in ANITO's Settings tab." % exc)
+        warn("Could not save the Ollama address (%s). Set it later in ANITO's Settings (F2)." % exc)
 
 
 # --------------------------------------------------------------------------- install modes
@@ -490,7 +490,7 @@ def run_uninstall(pipx: list[str] | None) -> int:
     remove_pipx = has_pipx and ask_yes_no("Remove the ANITO command (installed with pipx)?")
     remove_venv = has_venv and ask_yes_no("Delete the project's .venv folder?")
     remove_settings = has_settings and ask_yes_no(
-        "Also delete your settings in %s?" % settings, default=False
+        "Also delete your settings and saved chats in %s?" % settings, default=False
     )
     if not (remove_pipx or remove_venv or remove_settings):
         print("Nothing selected, so nothing was changed.")

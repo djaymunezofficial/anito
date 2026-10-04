@@ -1,15 +1,18 @@
-"""Modal dialogs shared by the tabs."""
+"""Modal dialogs shared across the app."""
 
 from __future__ import annotations
 
 import contextlib
+from collections.abc import Collection, Sequence
 
+from rich.text import Text
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import ModalScreen
-from textual.widgets import Button, Input, Label, ProgressBar, Static
+from textual.widgets import Button, Input, Label, OptionList, ProgressBar, Static
+from textual.widgets.option_list import Option
 from textual.worker import Worker
 
 from anito.utils.ollama_api import OllamaClient, OllamaError, PullProgress
@@ -57,6 +60,123 @@ class ConfirmDialog(ModalScreen[bool]):
 
     def action_cancel(self) -> None:
         self.dismiss(False)
+
+
+class ModelPickerDialog(ModalScreen[str | None]):
+    """Pick one of the installed models. Dismisses with its name, or None if cancelled."""
+
+    BINDINGS = [Binding("escape", "cancel", "Cancel", show=False)]
+
+    def __init__(
+        self,
+        models: Sequence[str],
+        current: str,
+        loaded: Collection[str] = (),
+    ) -> None:
+        super().__init__()
+        self._models = list(models)
+        self._current = current
+        self._loaded = set(loaded)
+
+    def compose(self) -> ComposeResult:
+        with Vertical(classes="dialog"):
+            yield Label("Choose model", classes="dialog-title")
+            if self._models:
+                yield OptionList(*self._options(), id="picker-list")
+            else:
+                yield Static(
+                    "No models installed. Pull one from Settings, under Models.",
+                    classes="dialog-body",
+                    markup=False,
+                )
+            with Horizontal(classes="dialog-buttons"):
+                yield Button("Cancel", id="btn-cancel")
+                yield Button("Use", id="btn-use", variant="primary", disabled=not self._models)
+
+    def _options(self) -> list[Option]:
+        options = []
+        for name in self._models:
+            is_current = name == self._current
+            label = Text.assemble(
+                (f"> {name}" if is_current else f"  {name}", "bold" if is_current else ""),
+                ("  loaded", "dim") if name in self._loaded else "",
+            )
+            options.append(Option(label, id=name))
+        return options
+
+    def on_mount(self) -> None:
+        if not self._models:
+            self.query_one("#btn-cancel", Button).focus()
+            return
+        options = self.query_one("#picker-list", OptionList)
+        if self._current in self._models:
+            options.highlighted = self._models.index(self._current)
+        options.focus()
+
+    def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
+        event.stop()
+        self.dismiss(event.option.id)
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        event.stop()
+        if event.button.id != "btn-use":
+            self.action_cancel()
+            return
+        index = self.query_one("#picker-list", OptionList).highlighted
+        if index is None:
+            self.notify("Select a model first", severity="warning")
+            return
+        self.dismiss(self._models[index])
+
+    def action_cancel(self) -> None:
+        self.dismiss(None)
+
+
+def _columns(rows: Sequence[tuple[str, str]]) -> list[str]:
+    width = max((len(left) for left, _ in rows), default=0)
+    return [f"  {left.ljust(width)}  {right}" for left, right in rows]
+
+
+class HelpDialog(ModalScreen[None]):
+    """Lists the keys and slash commands. The caller supplies both, so they can't drift from the app."""
+
+    BINDINGS = [
+        Binding("escape", "close", "Close", show=False),
+        Binding("enter", "close", "Close", show=False),
+    ]
+
+    def __init__(
+        self,
+        keys: Sequence[tuple[str, str]],
+        commands: Sequence[tuple[str, str]] = (),
+    ) -> None:
+        super().__init__()
+        self._keys = keys
+        self._commands = commands
+
+    def compose(self) -> ComposeResult:
+        lines = ["Keys", *_columns(self._keys)]
+        if self._commands:
+            lines += ["", "Slash commands", *_columns(self._commands)]
+        with Vertical(classes="dialog wide"):
+            yield Label("Help", classes="dialog-title")
+            with VerticalScroll(id="help-body"):
+                yield Static("\n".join(lines), markup=False)
+            with Horizontal(classes="dialog-buttons"):
+                yield Button("Close", id="btn-close-help", variant="primary")
+
+    def on_mount(self) -> None:
+        # Leave room for the title, buttons and padding on short terminals.
+        body = self.query_one("#help-body", VerticalScroll)
+        body.styles.max_height = max(5, min(24, self.app.size.height - 10))
+        body.focus()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        event.stop()
+        self.action_close()
+
+    def action_close(self) -> None:
+        self.dismiss(None)
 
 
 def _validate_model_name(name: str) -> str | None:

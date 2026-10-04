@@ -11,6 +11,8 @@ import httpx
 
 REQUEST_TIMEOUT = 30.0
 PING_TIMEOUT = 5.0
+# Reading a large model from disk into memory can take minutes.
+LOAD_TIMEOUT = 300.0
 
 
 class OllamaError(Exception):
@@ -44,6 +46,25 @@ class ModelInfo:
 
 
 @dataclass(frozen=True)
+class RunningModel:
+    name: str
+    size: int  # bytes held in memory
+    size_vram: int  # the part of size that sits on the GPU
+    context_length: int  # 0 when this Ollama version doesn't report it
+    expires_at: str
+
+    @classmethod
+    def from_api(cls, raw: dict[str, Any]) -> RunningModel:
+        return cls(
+            name=raw.get("name") or raw.get("model") or "",
+            size=raw.get("size") or 0,
+            size_vram=raw.get("size_vram") or 0,
+            context_length=raw.get("context_length") or 0,
+            expires_at=raw.get("expires_at") or "",
+        )
+
+
+@dataclass(frozen=True)
 class PullProgress:
     status: str
     total: int = 0
@@ -57,6 +78,7 @@ class ChatChunk:
     done: bool = False
     eval_count: int = 0
     eval_duration: int = 0  # nanoseconds
+    prompt_eval_count: int = 0
 
 
 def _error_message(body: bytes, status: int) -> str:
@@ -67,6 +89,14 @@ def _error_message(body: bytes, status: int) -> str:
     if isinstance(data, dict) and data.get("error"):
         return str(data["error"])
     return f"Ollama returned HTTP {status}"
+
+
+def _keep_alive_value(value: str | int) -> str | int:
+    # Ollama reads strings as Go durations, which reject a bare "-1".
+    # A negative number is the documented way to keep a model loaded forever.
+    if value == "-1":
+        return -1
+    return value
 
 
 class OllamaClient:
@@ -104,7 +134,7 @@ class OllamaClient:
         path: str,
         *,
         body: dict[str, Any] | None = None,
-        timeout: float = REQUEST_TIMEOUT,
+        timeout: float | None = REQUEST_TIMEOUT,
     ) -> httpx.Response:
         try:
             resp = await self._client.request(method, path, json=body, timeout=timeout)
@@ -159,14 +189,23 @@ class OllamaClient:
         resp = await self._request("GET", "/api/tags")
         return [ModelInfo.from_api(m) for m in self._json(resp).get("models") or []]
 
-    async def running_models(self) -> list[str]:
+    async def running(self) -> list[RunningModel]:
         resp = await self._request("GET", "/api/ps")
-        models = self._json(resp).get("models") or []
-        return [m.get("name") or m.get("model") or "" for m in models]
+        return [RunningModel.from_api(m) for m in self._json(resp).get("models") or []]
+
+    async def running_models(self) -> list[str]:
+        return [m.name for m in await self.running()]
 
     async def delete(self, name: str) -> None:
         # Older Ollama versions expect "name", newer ones "model".
         await self._request("DELETE", "/api/delete", body={"model": name, "name": name})
+
+    async def load(self, name: str, keep_alive: str | int | None = None) -> None:
+        """Load a model into memory without generating anything."""
+        body: dict[str, Any] = {"model": name, "stream": False}
+        if keep_alive is not None:
+            body["keep_alive"] = _keep_alive_value(keep_alive)
+        await self._request("POST", "/api/generate", body=body, timeout=LOAD_TIMEOUT)
 
     async def unload(self, name: str) -> None:
         await self._request(
@@ -191,13 +230,16 @@ class OllamaClient:
         *,
         temperature: float,
         num_ctx: int,
+        keep_alive: str | int | None = None,
     ) -> AsyncIterator[ChatChunk]:
-        body = {
+        body: dict[str, Any] = {
             "model": model,
             "messages": messages,
             "stream": True,
             "options": {"temperature": temperature, "num_ctx": num_ctx},
         }
+        if keep_alive is not None:
+            body["keep_alive"] = _keep_alive_value(keep_alive)
         async for data in self._stream("/api/chat", body):
             message = data.get("message") or {}
             yield ChatChunk(
@@ -206,4 +248,5 @@ class OllamaClient:
                 done=bool(data.get("done")),
                 eval_count=data.get("eval_count") or 0,
                 eval_duration=data.get("eval_duration") or 0,
+                prompt_eval_count=data.get("prompt_eval_count") or 0,
             )

@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import tempfile
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable
 
@@ -14,7 +15,15 @@ APP_NAME = "anito"
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
 TEMPERATURE_RANGE = (0.0, 2.0)
-NUM_CTX_RANGE = (256, 131072)
+NUM_CTX_RANGE = (256, 262144)
+
+THEMES = ("monochrome", "kanagawa")
+DEFAULT_THEME = "monochrome"
+
+# Ollama's own default, and its spelling of "never unload".
+DEFAULT_KEEP_ALIVE = "5m"
+KEEP_ALIVE_FOREVER = "-1"
+_KEEP_ALIVE_PATTERN = re.compile(r"[1-9]\d*[smh]")
 
 
 def get_config_dir() -> Path:
@@ -29,6 +38,7 @@ def get_config_dir() -> Path:
 
 CONFIG_DIR = get_config_dir()
 CONFIG_FILE = CONFIG_DIR / "config.json"
+CHATS_DIR = CONFIG_DIR / "chats"
 
 
 # Validators raise ValueError with a message that can be shown to the user as-is.
@@ -67,10 +77,41 @@ def parse_url(raw: Any) -> str:
     return value
 
 
+def parse_bool(raw: Any) -> bool:
+    if not isinstance(raw, bool):
+        raise ValueError("Expected true or false")
+    return raw
+
+
 def parse_text(raw: Any) -> str:
     if not isinstance(raw, str):
         raise ValueError("Expected text")
     return raw
+
+
+def parse_theme(raw: Any) -> str:
+    value = raw.strip().lower() if isinstance(raw, str) else ""
+    if value not in THEMES:
+        raise ValueError(f"Theme must be one of: {', '.join(THEMES)}")
+    return value
+
+
+def parse_keep_alive(raw: Any) -> str:
+    """Accepts 30s, 5m, 2h or 'forever'. Zero is refused: that is what Unload is for."""
+    if not isinstance(raw, str):
+        raise ValueError("Keep loaded for must be text, e.g. 5m")
+    value = raw.strip().lower()
+    if value in ("forever", KEEP_ALIVE_FOREVER):
+        return KEEP_ALIVE_FOREVER
+    if not _KEEP_ALIVE_PATTERN.fullmatch(value):
+        raise ValueError("Keep loaded for must look like 30s, 5m or 2h, or be 'forever'")
+    return value
+
+
+def parse_name_list(raw: Any) -> list[str]:
+    if not isinstance(raw, list) or not all(isinstance(item, str) for item in raw):
+        raise ValueError("Expected a list of names")
+    return list(dict.fromkeys(raw))
 
 
 @dataclass
@@ -80,6 +121,11 @@ class Config:
     num_ctx: int = 4096
     system_prompt: str = ""
     last_model: str = ""
+    theme: str = DEFAULT_THEME
+    keep_alive: str = DEFAULT_KEEP_ALIVE
+    ollama_auto_start: bool = False
+    # Stored as the exceptions so that newly added skills start out enabled.
+    disabled_skills: list[str] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: Any) -> Config:
@@ -105,6 +151,10 @@ _PARSERS: dict[str, Callable[[Any], Any]] = {
     "num_ctx": parse_num_ctx,
     "system_prompt": parse_text,
     "last_model": parse_text,
+    "theme": parse_theme,
+    "keep_alive": parse_keep_alive,
+    "ollama_auto_start": parse_bool,
+    "disabled_skills": parse_name_list,
 }
 
 
